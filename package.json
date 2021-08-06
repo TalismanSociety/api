@@ -1,5 +1,5 @@
 {
-  "name": "@tailsman/chainfactory",
+  "name": "@tailsman/api",
   "version": "0.0.1",
   "description": "A lib for spinning up multiple polkadot.js or lightclient instances and being able to perform aggregate queries",
   "main": "index.js",
@@ -7,5 +7,10 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "GPL-3.0-only"
+  "license": "GPL-3.0-only",
+  "dependencies": {
+    "@polkadot/api": "^5.3.2",
+    "@types/uuid": "^8.3.1",
+    "uuid": "^8.3.2"
+  }
 }

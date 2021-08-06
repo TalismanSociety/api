@@ -1,4 +1,4 @@
-# @talisman/chainfactory
+# @talisman/api
 **A package for spinning up a set of endpoints for doing analysis over multiple chains at once.**
 
 @talisman/chainfactory is a factory lib for instantiating multiple polkadot.js or lightclient instances and being able to perform aggregate queries over all endpoints.
