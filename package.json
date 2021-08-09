@@ -2,18 +2,27 @@
   "name": "@talismn/api",
   "version": "0.0.2",
   "description": "A lib for spinning up multiple polkadot.js or lightclient instances and being able to perform aggregate queries",
-  "main": "index.js",
+  "types": "dist/types",
+  "browser": "./dist/index.js",
+  "exports": "./dist/index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "prepublishOnly": "yarn build"
   },
   "author": "Talisman",
   "license": "GPL-3.0-only",
   "dependencies": {
     "@polkadot/api": "^5.3.2",
+    "@types/lodash": "^4.14.172",
     "@types/uuid": "^8.3.1",
+    "lodash": "^4.17.21",
     "uuid": "^8.3.2"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "typescript": "^4.3.5"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/TalismanSociety/api.git"
