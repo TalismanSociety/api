@@ -1,3 +1,5 @@
+import Factory from './factory'
+
 const mappings = {
   balance: {
     mapping: 'query.system.account',
@@ -7,7 +9,7 @@ const mappings = {
 
 class Interface{
 
-  factory: null|object = null
+  factory: Factory|null = null
 
   // set the factory to be used
   setFactory(factory: Factory){
@@ -16,16 +18,17 @@ class Interface{
 
   // mappings
   async connect(props){
+    if (!this.factory) throw new Error('failed to connect: no factory set')
     await this.factory.connect(props)
     return this
   }
 
   // iterate through addresses & get chainfactory data
   // [todo] could return a balance type/object with filtering/ordering/cutting options?
-  async balance(addresses: array|string = []){
+  async balance(addresses: string[]|string = []){
     
     addresses = typeof addresses === 'string' ? [addresses] : addresses
-    const balances = []
+	const balances: any = []
 
     for (let i = 0; i < addresses.length; i++) {
       const result = await this.resolveMapping('balance', addresses[i])
@@ -52,8 +55,8 @@ class Interface{
     balances.byAddress = () => {
       const formatted = {}
       balances.forEach(item => {
-        if(!formatted[address]) { formatted[address] = []}
-        formatted[address].push(item)
+        if(!formatted[item.address]) { formatted[item.address] = []}
+        formatted[item.address].push(item)
       })
       return formatted
     }
@@ -62,8 +65,8 @@ class Interface{
     balances.byChain = () => {
       const formatted = {}
       balances.forEach(item => {
-        if(!formatted[chainId]) { formatted[chainId] = []}
-        formatted[chainId].push(item)
+        if(!formatted[item.chainId]) { formatted[item.chainId] = []}
+        formatted[item.chainId].push(item)
       })
       return formatted
     }
@@ -73,6 +76,7 @@ class Interface{
 
 
   async resolveMapping(key, address){
+    if (!this.factory) throw new Error('failed to resolveMapping: no factory set')
     const mapping = mappings[key].mapping
     return await this.factory.call(mapping, address)
   }

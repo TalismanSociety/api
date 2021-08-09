@@ -4,12 +4,13 @@ import { ApiPromise, WsProvider } from '@polkadot/api';
 class Connector{
   type: string = 'POLKADOTJS'
   id: string|null = null
-  rpcs: array = []
-  nativeToken: string = null
+  rpcs: any[] = []
+  nativeToken: string|null = null
   api: ApiPromise|null = null
+  query: any
   isReady: boolean = false
 
-  constructor(id: string, rpcs: array = []){
+  constructor(id: string, rpcs: any[] = []){
     if(!id) throw new Error('Chain ID must be supplied')
     this.id = id
     this.rpcs = rpcs

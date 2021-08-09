@@ -3,7 +3,7 @@ import { PolkadotJs } from './connectors'
 import Subscribable from './subscribable'
 import { get } from 'lodash'
 
-export const options: object = {
+export const options: { [key: string]: string } = {
   POLKADOT: 'POLKADOT', // using polkadot.js 
   TALISMAN: 'TALISMAN', // using talisman.js
   LIGHT: 'LIGHT' // using lightclients
@@ -11,26 +11,22 @@ export const options: object = {
 
 interface InitType {
   chains?: (string|number)[],
-  rpcs?: object,
+  rpcs?: any[],
   type?: string
-}
-
-const defaultInitProps = {
-  chains: [],
-  rpcs: {},
-  type: options.POLKADOT
 }
 
 class Factory extends Subscribable{
 
   type: string = Object.keys(options)[0]
+  chains: string[] = []
+  rpcs: any[] = []
   customRPCs: string[] = []
   connected: boolean = false
   instancePool: object = {}
-  connectedChains: object = {}
+  connectedChains: any[] = []
   isInitialised = false
 
-  async connect({type=null, chains=[], rpcs={}}: InitType = defaultInitProps, reInit=false){
+  async connect({type=options.POLKADOT, chains=[], rpcs=[]}: InitType, reInit=false){
     if(this.isInitialised === true && reInit !== true) return this.connectedChains
     this.isInitialised = true
 
@@ -76,7 +72,7 @@ class Factory extends Subscribable{
   }
 
   // init using RPCs
-  async _connectWithPolkadotJs(){
+  async _connectWithPolkadotJs(): Promise<any[]> {
     const chainIds = await this.validateChainIds()
 
     // init all instances
@@ -91,18 +87,20 @@ class Factory extends Subscribable{
     return chains
   }
 
-  async _connectWithTalismanJs(){
-     // todo
+  async _connectWithTalismanJs(): Promise<any[]> {
+    // todo
+    return []
   }
 
   // init using lightclients
-  async _connectWithLightclients(){
+  async _connectWithLightclients(): Promise<any[]> {
     // todo
+    return []
   }
 
   // iterate through all parachains and 
   async call(path, params){
-    const results = []
+    const results: {balance: any, chain: any}[] = []
     for (let i = 0; i < this.connectedChains.length; i++) {
       const result = await get(this.connectedChains[i], path)(params).then(r=>r)
       results.push({
