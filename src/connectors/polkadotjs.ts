@@ -1,4 +1,4 @@
-import chaindata from '../../chaindata-js'
+import chaindata from '../../../chaindata-js'
 import { ApiPromise, WsProvider } from '@polkadot/api';
 
 class Connector{

@@ -1,4 +1,4 @@
-import chaindata from '../chaindata-js'
+import chaindata from '../../chaindata-js'
 import { PolkadotJs } from './connectors'
 import Subscribable from './subscribable'
 import { get } from 'lodash'
