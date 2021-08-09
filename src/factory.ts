@@ -2,12 +2,15 @@ import chaindata from '../../chaindata-js'
 import { PolkadotJs } from './connectors'
 import Subscribable from './subscribable'
 import { get } from 'lodash'
+import PromisePool from '@supercharge/promise-pool'
 
 export const options: { [key: string]: string } = {
   POLKADOT: 'POLKADOT', // using polkadot.js 
   TALISMAN: 'TALISMAN', // using talisman.js
   LIGHT: 'LIGHT' // using lightclients
 }
+
+const chainConcurrencyLimit = 5 // connect or fetch data from a maximum of 5 chains at a time
 
 interface InitType {
   chains?: (string|number)[],
@@ -76,13 +79,14 @@ class Factory extends Subscribable{
     const chainIds = await this.validateChainIds()
 
     // init all instances
-    const chains = await Promise.all(
-      chainIds.map(async id => {
+    const { results: chains } = await PromisePool
+      .withConcurrency(chainConcurrencyLimit)
+      .for(chainIds)
+      .process(async id => {
         const instance = new PolkadotJs(id, this.rpcs[id])
         await instance.connect()
         return instance
-      }
-    ))
+      })
 
     return chains
   }
@@ -100,14 +104,13 @@ class Factory extends Subscribable{
 
   // iterate through all parachains and 
   async call(path, params){
-    const results: {balance: any, chain: any}[] = []
-    for (let i = 0; i < this.connectedChains.length; i++) {
-      const result = await get(this.connectedChains[i], path)(params).then(r=>r)
-      results.push({
-        balance: result.data, 
-        chain: this.connectedChains[i] 
+    const { results } = await PromisePool
+      .withConcurrency(chainConcurrencyLimit)
+      .for(this.connectedChains)
+      .process(async chain => {
+        const result = await get(chain, path)(params).then(result => result)
+        return { balance: result.data, chain }
       })
-    }
 
     return results
   }
