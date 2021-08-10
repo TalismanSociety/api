@@ -2,7 +2,7 @@ import chaindata from '../../chaindata-js'
 import { PolkadotJs } from './connectors'
 import Subscribable from './subscribable'
 import { get } from 'lodash'
-import PromisePool from '@supercharge/promise-pool'
+import pMap from 'p-map'
 
 export const options: { [key: string]: string } = {
   POLKADOT: 'POLKADOT', // using polkadot.js 
@@ -79,14 +79,21 @@ class Factory extends Subscribable{
     const chainIds = await this.validateChainIds()
 
     // init all instances
-    const { results: chains } = await PromisePool
-      .withConcurrency(chainConcurrencyLimit)
-      .for(chainIds)
-      .process(async id => {
-        const instance = new PolkadotJs(id, this.rpcs[id])
-        await instance.connect()
-        return instance
-      })
+    const chains = await pMap(
+      chainIds,
+      async id => {
+        try {
+          const instance = new PolkadotJs(id, this.rpcs[id])
+          await instance.connect()
+
+          return instance
+        } catch (error) {
+          console.error(`failed to connect to chain ${id}`, error)
+          return null
+        }
+      },
+      { concurrency: chainConcurrencyLimit }
+    )
 
     return chains
   }
@@ -104,13 +111,20 @@ class Factory extends Subscribable{
 
   // iterate through all parachains and 
   async call(path, params){
-    const { results } = await PromisePool
-      .withConcurrency(chainConcurrencyLimit)
-      .for(this.connectedChains)
-      .process(async chain => {
-        const result = await get(chain, path)(params).then(result => result)
-        return { balance: result.data, chain }
-      })
+    const results = await pMap(
+      this.connectedChains,
+      async chain => {
+        try {
+          const result = await get(chain, path)(params)
+
+          return { balance: result.data, chain }
+        } catch (error) {
+          console.error(`failed to get result for chain ${chain.id}`, error)
+          return null
+        }
+      },
+      { concurrency: chainConcurrencyLimit }
+    )
 
     return results
   }
