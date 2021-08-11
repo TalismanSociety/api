@@ -1,4 +1,4 @@
-import chaindata from '../../../chaindata-js'
+import chaindata from '@talismn/chaindata-js'
 import compose from '../compose'
 import { ApiPromise, WsProvider } from '@polkadot/api';
 import { options as acalaOptions } from '@acala-network/api'
