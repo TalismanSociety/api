@@ -1,5 +1,7 @@
 import chaindata from '../../../chaindata-js'
+import compose from '../compose'
 import { ApiPromise, WsProvider } from '@polkadot/api';
+import { options as acalaOptions } from '@acala-network/api'
 
 class Connector{
   type: string = 'POLKADOTJS'
@@ -37,7 +39,7 @@ class Connector{
   async connect(){
     const { rpc } = await this.getChainData()
     const provider = new WsProvider(rpc);
-    await ApiPromise.create({ provider }).then(api => {
+    await ApiPromise.create(compose(acalaOptions)({ provider })).then(api => {
       this.api = api
       this.query = this.api.query
       this.isReady = true
