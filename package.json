@@ -1,6 +1,6 @@
 {
   "name": "@talismn/api",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A lib for spinning up multiple polkadot.js or lightclient instances and being able to perform aggregate queries",
   "types": "dist/types",
   "browser": "./dist/index.js",
