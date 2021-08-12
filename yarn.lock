@@ -543,9 +543,9 @@
     defer-to-connect "^1.0.1"
 
 "@talismn/chaindata-js@~0":
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/@talismn/chaindata-js/-/chaindata-js-0.0.2.tgz#9f9bb4eba5557108dfd1b5eb5184728cadb04bc1"
-  integrity sha512-uznZpFMDoREj12ebL0UQGvvKOct+FKgAmiHOt9/QTUd344HPgQqb+eWP1SuEOfuAsDx9neSYiD1ucN3mFkKDcw==
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/@talismn/chaindata-js/-/chaindata-js-0.0.3.tgz#6befc46ae7bf3852151e6f3ab25485041a796f0d"
+  integrity sha512-+ZsRgrYJY/ObVxeyApsVHpvRoxj1t/dP4k4ppvUQDkFCXy4YkzjRoBpFW3NFtLVoYNNFR0rpzLaOZ4Bt1MXx0g==
 
 "@types/bn.js@^4.11.6":
   version "4.11.6"
