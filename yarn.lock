@@ -424,7 +424,7 @@
     "@polkadot/x-ws" "^7.1.1"
     eventemitter3 "^4.0.7"
 
-"@polkadot/typegen@^5.2.1":
+"@polkadot/typegen@^5.2.1", "@polkadot/typegen@^5.4.1":
   version "5.4.1"
   resolved "https://registry.yarnpkg.com/@polkadot/typegen/-/typegen-5.4.1.tgz#ab70aa917c684fced378f3af40a7a840898bb355"
   integrity sha512-AkPTKdvCXaDHmpKHffCJBt3aoF6PuJ/GVontA6SHmA14yVwJ1P3eSp4wfZshaTvpvrpbLO9LV2x+aEyN+IPdBA==
