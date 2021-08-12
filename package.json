@@ -16,7 +16,7 @@
   "dependencies": {
     "@acala-network/api": "^2.0.1",
     "@polkadot/api": "^5.3.2",
-    "@talismn/chaindata-js": "^0.0.2",
+    "@talismn/chaindata-js": "~0",
     "@types/lodash": "^4.14.172",
     "@types/uuid": "^8.3.1",
     "lodash": "^4.17.21",

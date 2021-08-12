@@ -599,7 +599,7 @@
     "@types/websocket" "^1.0.4"
     websocket "^1.0.34"
 
-"@talismn/chaindata-js@^0.0.2":
+"@talismn/chaindata-js@~0":
   version "0.0.2"
   resolved "https://registry.yarnpkg.com/@talismn/chaindata-js/-/chaindata-js-0.0.2.tgz#9f9bb4eba5557108dfd1b5eb5184728cadb04bc1"
   integrity sha512-uznZpFMDoREj12ebL0UQGvvKOct+FKgAmiHOt9/QTUd344HPgQqb+eWP1SuEOfuAsDx9neSYiD1ucN3mFkKDcw==
