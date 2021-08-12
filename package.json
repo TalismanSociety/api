@@ -26,6 +26,9 @@
   "devDependencies": {
     "typescript": "^4.3.5"
   },
+  "files": [
+    "dist/*"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/TalismanSociety/api.git"
