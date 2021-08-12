@@ -599,10 +599,10 @@
     "@types/websocket" "^1.0.4"
     websocket "^1.0.34"
 
-"@talismn/chaindata-js@^0.0.1":
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/@talismn/chaindata-js/-/chaindata-js-0.0.1.tgz#5983e1eb32ffc42faf07947fd079ea302bdbc584"
-  integrity sha512-R1/qFGe9JtXxqE11fA+uFWlfYGdedr0CtU6l5gV8S8tbjNlVf0HIOeRdPuWTBH/xjadG91dyuT8VxuwV/xm19Q==
+"@talismn/chaindata-js@^0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@talismn/chaindata-js/-/chaindata-js-0.0.2.tgz#9f9bb4eba5557108dfd1b5eb5184728cadb04bc1"
+  integrity sha512-uznZpFMDoREj12ebL0UQGvvKOct+FKgAmiHOt9/QTUd344HPgQqb+eWP1SuEOfuAsDx9neSYiD1ucN3mFkKDcw==
 
 "@types/bn.js@^4.11.6":
   version "4.11.6"
