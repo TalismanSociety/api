@@ -39,7 +39,7 @@ class Connector{
   async connect(){
     const { rpc } = await this.getChainData()
     const provider = new WsProvider(rpc);
-    await ApiPromise.create(compose(acalaOptions)({ provider, throwOnConnect: true })).then(api => {
+    await ApiPromise.create(compose(acalaOptions as any)({ provider, throwOnConnect: true })).then(api => {
       this.api = api
       this.query = this.api.query
       this.isReady = true

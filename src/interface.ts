@@ -28,12 +28,15 @@ class Interface{
   async balance(addresses: string[]|string = []){
     
     addresses = typeof addresses === 'string' ? [addresses] : addresses
-	const balances: any = []
+  const balances: any = []
 
     for (let i = 0; i < addresses.length; i++) {
       const result = await this.resolveMapping('balance', addresses[i])
 
-      const mapped = result.map(({balance, chain}) => {
+      const mapped = result.map(result => {
+        if (result === null) return {}
+
+        const {balance, chain} = result
         const total = balance.free.toString()
         const reserve = "1" 
         const available = (+total - +reserve <= 0 ? 0 : +total - +reserve).toString()
