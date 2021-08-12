@@ -1,14 +1,16 @@
 {
   "compilerOptions": {
     "strict": true,
-    "target": "es2020",
-    "module": "es2020",
+    "target": "es2015",
+    "module": "es2015",
+    "emitDeclarationOnly": true,
     "declaration": true,
     "declarationDir": "dist/types",
     "rootDir": "src",
     "outDir": "dist",
     "moduleResolution": "node",
-    "noImplicitAny": false,
-    "allowSyntheticDefaultImports": true
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "noImplicitAny": false
   }
 }
