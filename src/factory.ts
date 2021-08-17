@@ -14,7 +14,7 @@ const chainConcurrencyLimit = 5 // connect or fetch data from a maximum of 5 cha
 
 interface InitType {
   chains?: (string|number)[],
-  rpcs?: any[],
+  rpcs?: { [key: string]: string[] },
   type?: string
 }
 
@@ -22,14 +22,13 @@ class Factory extends Subscribable{
 
   type: string = Object.keys(options)[0]
   chains: string[] = []
-  rpcs: any[] = []
-  customRPCs: string[] = []
+  rpcs: { [key: string]: string[] } = {}
   connected: boolean = false
   instancePool: object = {}
   connectedChains: any[] = []
   isInitialised = false
 
-  async connect({type=options.POLKADOT, chains=[], rpcs=[]}: InitType, reInit=false){
+  async connect({type=options.POLKADOT, chains=[], rpcs={}}: InitType, reInit=false){
     if(this.isInitialised === true && reInit !== true) return this.connectedChains
     this.isInitialised = true
 
@@ -89,7 +88,7 @@ class Factory extends Subscribable{
           return instance
         } catch (error) {
           console.error(`failed to connect to chain ${id}`, error)
-          return null
+          return { id }
         }
       },
       { concurrency: chainConcurrencyLimit }
@@ -115,11 +114,13 @@ class Factory extends Subscribable{
       this.connectedChains,
       async chain => {
         try {
+          if (!chain.isReady) throw new Error('chain not ready')
+
           const result = await get(chain, path)(params)
 
           return { balance: result.data, chain }
         } catch (error) {
-          console.error(`failed to get result for chain ${chain.id}`, error)
+          console.error(`failed to get result for chain ${chain?.id}`, error)
           return null
         }
       },

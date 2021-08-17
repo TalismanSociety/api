@@ -30,15 +30,15 @@ class Connector{
     }
 
     return {
-      rpc: this.rpcs[0],
+      rpcs: this.rpcs,
       nativeToken: this.nativeToken
     }
   }
 
   // todo: catch broken rpcs and try another
   async connect(){
-    const { rpc } = await this.getChainData()
-    const provider = new WsProvider(rpc);
+    const { rpcs } = await this.getChainData()
+    const provider = new WsProvider(rpcs)
     await ApiPromise.create(compose(acalaOptions as any)({ provider, throwOnConnect: true })).then(api => {
       this.api = api
       this.query = this.api.query
