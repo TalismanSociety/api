@@ -10,7 +10,7 @@ export const options: { [key: string]: string } = {
   LIGHT: 'LIGHT' // using lightclients
 }
 
-const chainConcurrencyLimit = 5 // connect or fetch data from a maximum of 5 chains at a time
+const chainConcurrencyLimit = 10 // connect or fetch data from a maximum of 10 chains at a time
 
 interface InitType {
   chains?: (string|number)[],
