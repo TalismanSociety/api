@@ -47,9 +47,9 @@ class Interface{
           address: addresses[i],
           chainId: chain.id,
           token: chain.nativeToken,
-          total,
-          free,
-          reserved,
+          total: total.toString(),
+          free: free.toString(),
+          reserved: reserved.toString(),
         }
       })
 
