@@ -1,3 +1,4 @@
+import BN from 'bn.js'
 import Factory from './factory'
 
 const mappings = {
@@ -37,17 +38,18 @@ class Interface{
         if (result === null) return {}
 
         const {balance, chain} = result
-        const total = balance.free.toString()
-        const reserve = "1" 
-        const available = (+total - +reserve <= 0 ? 0 : +total - +reserve).toString()
+
+        const free = new BN(balance.free.toString())
+        const reserved = new BN(balance.reserved.toString())
+        const total = free.add(reserved)
 
         return {
           address: addresses[i],
           chainId: chain.id,
           token: chain.nativeToken,
           total,
-          reserve,
-          available
+          free,
+          reserved,
         }
       })
 
