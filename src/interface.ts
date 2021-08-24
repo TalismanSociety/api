@@ -15,6 +15,9 @@ export type Balance = {
   feeFrozen: string
 }
 
+// create a maximum of 10 subscriptions at a time
+const newSubscriptionsConcurrencyLimit = 10
+
 // request a maximum of 2 queries at a time
 // number of outgoing connections = number of chains * number of requests
 // e.g. for 10 chains:
@@ -30,11 +33,84 @@ class Interface {
     this.factory = factory
   }
 
+  init(props: InitType): Interface {
+    if (!this.factory) throw new Error('failed to init: no factory set')
+    this.factory.init(props)
+    return this
+  }
+
   // mappings
   async connect(props: InitType): Promise<Interface> {
     if (!this.factory) throw new Error('failed to connect: no factory set')
     await this.factory.connect(props)
     return this
+  }
+
+  subscribeBalances(
+    chainIds: string[] = [],
+    addresses: string[] = [],
+    callback: (balance: Balance | null, chainId: string, address: string) => void
+  ): () => void {
+    const subscriptions = chainIds.flatMap(chainId => ({ chainId, addresses }))
+
+    const unsubscribeCallbacks = pMap(
+      subscriptions,
+      async ({ chainId, addresses }) => {
+        const path = 'balance'
+        const format = ({ output, chainId, nativeToken }: any): void => {
+          output.forEach((output: any, index: number) => {
+            const address = addresses[index]
+
+            if (output === null) {
+              callback(null, chainId, address)
+              return
+            }
+
+            const free = new BigNumber(output.data?.free.toString() || '0')
+            const reserved = new BigNumber(output.data?.reserved.toString() || '0')
+            const miscFrozen = new BigNumber(output.data?.miscFrozen.toString() || '0')
+            const feeFrozen = new BigNumber(output.data?.feeFrozen.toString() || '0')
+            const total = free.plus(reserved)
+
+            callback(
+              {
+                chainId,
+                token: nativeToken,
+                address,
+
+                total: total.toString(),
+                free: free.toString(),
+                reserved: reserved.toString(),
+                miscFrozen: miscFrozen.toString(),
+                feeFrozen: feeFrozen.toString(),
+              },
+              chainId,
+              address
+            )
+          })
+        }
+
+        if (!this.factory) throw new Error(`failed to subscribe to balances on chain ${chainId}: no factory set`)
+
+        try {
+          return await this.factory.subscribe(
+            chainId,
+            path,
+            addresses.map(address => [address]),
+            format
+          )
+        } catch (error) {
+          console.error(`failed to subscribe to balances on chain ${chainId}`, error)
+          return
+        }
+      },
+      { concurrency: newSubscriptionsConcurrencyLimit }
+    )
+
+    const unsubscribe = () =>
+      unsubscribeCallbacks.then(callbacks => callbacks.forEach(callback => callback && callback()))
+
+    return unsubscribe
   }
 
   // iterate through addresses & get chainfactory data

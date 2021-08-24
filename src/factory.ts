@@ -1,7 +1,7 @@
 import chaindata from '@talismn/chaindata-js'
-import Connectors, { Connector, ConnectorType, ConnectorTypes } from './connectors'
-import Subscribable from './subscribable'
 import pMap from 'p-map'
+
+import Connectors, { Connector, ConnectorType, ConnectorTypes } from './connectors'
 
 const chainConcurrencyLimit = 10 // connect or fetch data from a maximum of 10 chains at a time
 
@@ -11,14 +11,52 @@ export interface InitType {
   rpcs?: { [key: string]: string[] }
 }
 
-class Factory extends Subscribable {
+class Factory {
   type: ConnectorType = ConnectorTypes[0]
   chains: string[] = []
   rpcs: { [key: string]: string[] } = {}
   connected: boolean = false
   instancePool: object = {}
-  connectedChains: Connector[] = []
+  connectedChains: { [key: string]: Connector } = {}
   isInitialised = false
+
+  async subscribe(
+    chainId: string,
+    path: string,
+    args: string[][],
+    callback: (output: any) => void
+  ): Promise<(() => void) | null> {
+    if (!this.connectedChains[chainId]) {
+      const Connector = Connectors[this.type]
+      this.connectedChains[chainId] = new Connector(chainId, chainId ? this.rpcs[chainId] : [])
+    }
+
+    const connector = this.connectedChains[chainId]
+    try {
+      await connector.connect()
+    } catch (error) {
+      console.error(`failed to connect to chain ${chainId}`, error)
+      return null
+    }
+
+    try {
+      return connector.subscribe(path, args, callback)
+    } catch (error) {
+      console.error('failed to subscribe to chain endpoint', error)
+      return null
+    }
+  }
+
+  init({ type, chains = [], rpcs = {} }: InitType, reInit = false): Factory {
+    if (this.isInitialised === true && reInit !== true) return this
+    this.isInitialised = true
+
+    if (type !== undefined) this.type = type
+    this.chains = chains.map(chain => chain.toString())
+    this.rpcs = rpcs
+
+    return this
+  }
 
   async connect({ type, chains = [], rpcs = {} }: InitType, reInit = false): Promise<Factory> {
     if (this.isInitialised === true && reInit !== true) return this
@@ -34,22 +72,24 @@ class Factory extends Subscribable {
   }
 
   // init using RPCs
-  async connectChains(): Promise<Connector[]> {
-    return await pMap(
-      await this.validateChainIds(),
-      async id => {
-        const Connector = Connectors[this.type]
-        const instance = new Connector(id, id ? this.rpcs[id] : [])
+  async connectChains(): Promise<{ [key: string]: Connector }> {
+    return Object.fromEntries(
+      await pMap(
+        await this.validateChainIds(),
+        async id => {
+          const Connector = Connectors[this.type]
+          const instance = new Connector(id, id ? this.rpcs[id] : [])
 
-        try {
-          await instance.connect()
-        } catch (error) {
-          console.error(`failed to connect to chain ${id}`, error)
-        }
+          try {
+            await instance.connect()
+          } catch (error) {
+            console.error(`failed to connect to chain ${id}`, error)
+          }
 
-        return instance
-      },
-      { concurrency: chainConcurrencyLimit }
+          return [id, instance]
+        },
+        { concurrency: chainConcurrencyLimit }
+      )
     )
   }
 
@@ -60,7 +100,7 @@ class Factory extends Subscribable {
     format: (output: any[]) => Output
   ): Promise<Array<Output | null>> {
     return await pMap(
-      this.connectedChains,
+      Object.values(this.connectedChains),
       async chain => {
         try {
           return await chain.call(path, params, format)

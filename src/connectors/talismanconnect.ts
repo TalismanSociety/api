@@ -39,8 +39,9 @@ export default class TalismanConnect implements Connector {
   nativeToken: string | null = null
 
   ws: WebSocket | undefined
-  wsSubs: { [key: number]: (data: string | null) => void } = {}
-  wsReqIndex: number = 1
+  wsHandlers: { [key: number]: (data: string | null) => void } = {}
+  wsNextHandlerId: number = 1
+  wsSubscriptions: { [key: string]: (output: any) => void } = {}
 
   constructor(chainId: string | null, rpcs: string[]) {
     this.chainId = chainId
@@ -50,7 +51,7 @@ export default class TalismanConnect implements Connector {
   }
 
   async getChainData() {
-    if (!this.rpcs.length) {
+    if (!this.rpcs?.length) {
       const rpcResult = await chaindata.chain(this.chainId, 'rpcs')
       this.rpcs = rpcResult.rpcs
     }
@@ -72,6 +73,50 @@ export default class TalismanConnect implements Connector {
     await this.getChainData()
 
     return
+  }
+
+  async subscribe(path: string, args: string[][], callback: (output: any) => void): Promise<(() => void) | null> {
+    if (this.chainId === null) {
+      console.warn('ignoring subscription request: chainId not set')
+      return null
+    }
+
+    const rpc = this.rpcs[0]
+    if (!rpc) throw new Error('failed to create subscription: rpc required')
+
+    if (!rpc.startsWith('wss://') && !rpc.startsWith('ws://')) {
+      throw new Error('failed to create subscription: ws or wss rpc protocol required')
+    }
+
+    const endpoint = get(pathsToEndpoints, path).endpoint
+    if (!endpoint) return null
+
+    const method = 'state_subscribeStorage'
+    const params = [
+      // TODO: This argument formatting is specific to System.Account, we should come up with a generic way to specify it
+      args
+        .map(args => decodeAddress(args[0]))
+        .map(addressBytes => blake2Concat(addressBytes).replace('0x', ''))
+        .map(addressHash => endpoint.replace('%s', `${addressHash}`)),
+    ]
+
+    const response = await this._wsRpcFetch(rpc, method, params)
+    const result = JSON.parse(response).result
+    const subscriptionId = result
+
+    this.wsSubscriptions[subscriptionId] = callback
+
+    const unsubscribe = async () => {
+      const method = 'state_unsubscribeStorage'
+      const params = [subscriptionId]
+
+      const response = await this._wsRpcFetch(rpc, method, params)
+      const result = JSON.parse(response).result
+
+      return result
+    }
+
+    return unsubscribe
   }
 
   async call<Output>(path: string, params: string[], format: (output: any) => Output): Promise<Output | null> {
@@ -127,8 +172,8 @@ export default class TalismanConnect implements Connector {
       if (this.ws === undefined) await this._createSocket(url)
       if (this.ws === undefined) return reject('failed to create websocket connection')
 
-      const id = this._nextWsReqId()
-      this.wsSubs[id] = data => {
+      const id = this._nextWsHandlerId()
+      this.wsHandlers[id] = data => {
         if (data === null) return reject()
         resolve(data)
       }
@@ -138,9 +183,9 @@ export default class TalismanConnect implements Connector {
     })
   }
 
-  _nextWsReqId(): number {
-    const id = this.wsReqIndex
-    this.wsReqIndex = (this.wsReqIndex + 1) % 99999
+  _nextWsHandlerId(): number {
+    const id = this.wsNextHandlerId
+    this.wsNextHandlerId = (this.wsNextHandlerId + 1) % 999999
     return id
   }
 
@@ -152,25 +197,52 @@ export default class TalismanConnect implements Connector {
         resolve()
       }
       socket.onmessage = message => {
+        const data = JSON.parse(message.data)
+        const isSubscriptionUpdate = data.method !== undefined && typeof data.params.subscription === 'string'
+
+        if (isSubscriptionUpdate) {
+          const subscriptionId = data.params.subscription
+          const handler = this.wsSubscriptions[subscriptionId]
+          if (!handler) {
+            console.warn(`ignoring subscription ${subscriptionId}: no handler registered for this subscription id`)
+            return
+          }
+
+          handler({
+            chainId: this.chainId,
+            nativeToken: this.nativeToken,
+            output: data.params.result.changes.flatMap((changes: any) =>
+              // TODO: This output formatting is specific to System.Account, we should come up with a generic way to specify it
+              changes.slice(-1).map((change: any) => createType(registry, AccountInfo, change))
+            ),
+          })
+
+          return
+        }
+
         const id = JSON.parse(message.data)?.id
         if (!id) {
-          console.warn('ignoring ws message with no id', message)
+          console.warn('ignoring ws message with no id', data)
           return
         }
-        if (!this.wsSubs[id]) {
-          console.warn('ignoring ws message unknown id', message)
+        if (!this.wsHandlers[id]) {
+          console.warn('ignoring ws message with unknown id', data)
           return
         }
-        const subscription = this.wsSubs[id]
-        delete this.wsSubs[id]
-        subscription(message.data)
+        const handler = this.wsHandlers[id]
+        delete this.wsHandlers[id]
+        handler(message.data)
       }
       socket.onerror = reject
       socket.onclose = () => {
         this.ws = undefined
-        const subscriptions = Object.values(this.wsSubs)
-        this.wsSubs = {}
-        subscriptions.forEach(sub => sub(null))
+
+        const handlers = Object.values(this.wsHandlers)
+        this.wsHandlers = {}
+        handlers.forEach(handler => handler(null))
+
+        this.wsSubscriptions = {}
+
         reject()
       }
     })

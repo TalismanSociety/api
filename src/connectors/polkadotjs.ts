@@ -27,7 +27,7 @@ export default class PolkadotJs implements Connector {
   }
 
   async getChainData() {
-    if (!this.rpcs.length) {
+    if (!this.rpcs?.length) {
       const rpcResult = await chaindata.chain(this.chainId, 'rpcs')
       this.rpcs = rpcResult.rpcs
     }
@@ -55,14 +55,18 @@ export default class PolkadotJs implements Connector {
     return
   }
 
-  async call<Output>(path: string, params: string[], format: (output: any) => Output): Promise<Output | null> {
+  async subscribe(_path: string, _args: string[][], _callback: (output: any) => void): Promise<(() => void) | null> {
+    throw new Error('subscribe not yet implemented')
+  }
+
+  async call<Output>(path: string, args: string[], format: (output: any) => Output): Promise<Output | null> {
     if (!this.chainId) return null
     if (!this.api) throw new Error(`chain ${this.chainId} not ready`)
 
     const endpoint = get(pathsToEndpoints, path).endpoint
     if (!endpoint) return null
 
-    const output = await get(this.api, endpoint)(...params)
+    const output = await get(this.api, endpoint)(...args)
     return format({ chainId: this.chainId, nativeToken: this.nativeToken, output })
   }
 }
