@@ -1,16 +1,28 @@
-import Connector from './interface'
-import chaindata from '@talismn/chaindata-js'
-import { createType, TypeRegistry } from '@polkadot/types'
-import { get } from 'lodash'
-import { blake2AsHex } from '@polkadot/util-crypto'
 import { decodeAddress } from '@polkadot/keyring'
+import { TypeRegistry, createType } from '@polkadot/types'
+import { blake2AsHex } from '@polkadot/util-crypto'
+import chaindata from '@talismn/chaindata-js'
+import { get } from 'lodash'
+
+import Connector from './interface'
 
 const systemHash = '26aa394eea5630e07c48ae0c9558cef7' // util_crypto.xxhashAsHex("System", 128);
 const accountHash = 'b99d880ec681799c0cf30e8886371da9' // util_crypto.xxhashAsHex("Account", 128);
-const accountTuple = { AccountInfo: '(u64, u64, u64, u64, u64)' }
+const AccountInfo = JSON.stringify({
+  nonce: 'u32',
+  consumer: 'u32',
+  providers: 'u32',
+  sufficients: 'u32',
+  data: {
+    free: 'u128',
+    reserved: 'u128',
+    miscFrozen: 'u128',
+    feeFrozen: 'u128',
+  },
+})
 
 const registry = new TypeRegistry()
-registry.register(accountTuple)
+registry.register({ AccountInfo })
 
 const pathsToEndpoints = {
   balance: {
@@ -94,17 +106,16 @@ export default class TalismanConnect implements Connector {
 
     const address = args[0]
     const addressBytes = decodeAddress(address)
-    const addressHashed = blake2AsHex(addressBytes, 128).replace('0x', '')
-    const addressHex = [...addressBytes].map(x => x.toString(16).padStart(2, '0')).join('')
+    const addressHash = blake2Concat(addressBytes).replace('0x', '')
 
     const method = 'state_getStorage'
-    const params = [endpoint.replace('%s', `${addressHashed}${addressHex}`)]
+    const params = [endpoint.replace('%s', `${addressHash}`)]
 
-    const output = await this._wsRpcFetch(rpc, method, params)
-    const result = JSON.parse(output).result
-    const decoded = createType(registry, accountTuple.AccountInfo, result)
+    const response = await this._wsRpcFetch(rpc, method, params)
+    const result = JSON.parse(response).result
+    const output = createType(registry, AccountInfo, result)
 
-    return format({ chainId: this.chainId, nativeToken: this.nativeToken, data: decoded })
+    return format({ chainId: this.chainId, nativeToken: this.nativeToken, output })
   }
 
   async _callHttp<Output>(rpc: string, _path: string, _args: string[], _format: (output: any) => any): Promise<Output> {
@@ -164,4 +175,11 @@ export default class TalismanConnect implements Connector {
       }
     })
   }
+}
+
+function blake2Concat(input: Uint8Array): string {
+  const inputHash = blake2AsHex(input, 128)
+  const inputHex = [...input].map(x => x.toString(16).padStart(2, '0')).join('')
+
+  return `${inputHash}${inputHex}`
 }

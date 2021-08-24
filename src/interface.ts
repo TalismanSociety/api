@@ -1,6 +1,7 @@
 import BigNumber from 'bignumber.js'
-import Factory, { InitType } from './factory'
 import pMap from 'p-map'
+
+import Factory, { InitType } from './factory'
 
 export type Balance = {
   chainId: string
@@ -10,6 +11,8 @@ export type Balance = {
   total: string
   free: string
   reserved: string
+  miscFrozen: string
+  feeFrozen: string
 }
 
 // request a maximum of 2 queries at a time
@@ -42,19 +45,13 @@ class Interface {
         typeof addresses === 'string' ? [addresses] : addresses,
         async address => {
           const path = 'balance'
-          const format = ({ data, chainId, nativeToken }: any): Balance | null => {
-            if (data === null) return null
+          const format = ({ output, chainId, nativeToken }: any): Balance | null => {
+            if (output === null) return null
 
-            const balance = {
-              nonce: data[0],
-              index: data[1],
-              free: data[2],
-              locked: data[3],
-              reserved: data[4],
-            }
-
-            const free = new BigNumber(balance.free.toString())
-            const reserved = new BigNumber(balance.reserved.toString())
+            const free = new BigNumber(output.data?.free.toString() || '0')
+            const reserved = new BigNumber(output.data?.reserved.toString() || '0')
+            const miscFrozen = new BigNumber(output.data?.miscFrozen.toString() || '0')
+            const feeFrozen = new BigNumber(output.data?.feeFrozen.toString() || '0')
             const total = free.plus(reserved)
 
             return {
@@ -65,6 +62,8 @@ class Interface {
               total: total.toString(),
               free: free.toString(),
               reserved: reserved.toString(),
+              miscFrozen: miscFrozen.toString(),
+              feeFrozen: feeFrozen.toString(),
             }
           }
 

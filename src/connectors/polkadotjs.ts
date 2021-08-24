@@ -1,9 +1,10 @@
-import chaindata from '@talismn/chaindata-js'
-import Connector from './interface'
-import { get } from 'lodash'
-import compose from '../compose'
-import { ApiPromise, WsProvider } from '@polkadot/api'
 import { options as acalaOptions } from '@acala-network/api'
+import { ApiPromise, WsProvider } from '@polkadot/api'
+import chaindata from '@talismn/chaindata-js'
+import { get } from 'lodash'
+
+import compose from '../compose'
+import Connector from './interface'
 
 const pathsToEndpoints = {
   balance: {
@@ -61,8 +62,7 @@ export default class PolkadotJs implements Connector {
     const endpoint = get(pathsToEndpoints, path).endpoint
     if (!endpoint) return null
 
-    const result = await get(this.api, endpoint)(...params)
-    const data = [0, 0, result.data.free.toString(), 0, result.data.reserved.toString()]
-    return format({ chainId: this.chainId, nativeToken: this.nativeToken, data })
+    const output = await get(this.api, endpoint)(...params)
+    return format({ chainId: this.chainId, nativeToken: this.nativeToken, output })
   }
 }
