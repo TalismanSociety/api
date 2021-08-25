@@ -55,7 +55,11 @@ export default class PolkadotJs implements Connector {
     return
   }
 
-  async subscribe(_path: string, _args: string[][], _callback: (output: any) => void): Promise<(() => void) | null> {
+  async subscribe(
+    _path: string,
+    _args: string[][],
+    _callback: (result: { reference: string; output: any; chainId: string; nativeToken: string }) => void
+  ): Promise<(() => void) | null> {
     throw new Error('subscribe not yet implemented')
   }
 

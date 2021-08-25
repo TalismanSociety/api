@@ -5,7 +5,11 @@ export interface ConnectorConstructor {
 export default interface Connector {
   connect(): Promise<void>
 
-  subscribe(path: string, args: string[][], callback: (output: any) => void): Promise<(() => void) | null>
+  subscribe(
+    path: string,
+    args: string[][],
+    callback: (result: { reference: string; output: any; chainId: string; nativeToken: string }) => void
+  ): Promise<(() => void) | null>
 
   call<Output>(path: string, params: string[], format: (output: any) => Output): Promise<Output | null>
 }

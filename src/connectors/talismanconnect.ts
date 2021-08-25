@@ -76,7 +76,11 @@ export default class TalismanConnect implements Connector {
     return
   }
 
-  async subscribe(path: string, args: string[][], callback: (output: any) => void): Promise<(() => void) | null> {
+  async subscribe(
+    path: string,
+    args: string[][],
+    callback: (result: { reference: string; output: any; chainId: string; nativeToken: string }) => void
+  ): Promise<(() => void) | null> {
     if (this.chainId === null) {
       console.warn('ignoring subscription request: chainId not set')
       return null
@@ -219,14 +223,15 @@ export default class TalismanConnect implements Connector {
             return
           }
 
-          handler({
-            chainId: this.chainId,
-            nativeToken: this.nativeToken,
-            output: data.params.result.changes.flatMap((changes: any) =>
+          data.params.result.changes.forEach(([reference, change]) =>
+            handler({
+              chainId: this.chainId,
+              nativeToken: this.nativeToken,
+              reference,
               // TODO: This output formatting is specific to System.Account, we should come up with a generic way to specify it
-              changes.slice(-1).map((change: any) => createType(registry, AccountInfo, change))
-            ),
-          })
+              output: createType(registry, AccountInfo, change),
+            })
+          )
 
           return
         }
