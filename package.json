@@ -3,6 +3,7 @@
   "version": "0.0.11",
   "description": "A lib for spinning up multiple polkadot.js or lightclient instances and being able to perform aggregate queries",
   "types": "dist/types",
+  "main": "./src/index.ts",
   "browser": "./dist/index.js",
   "exports": "./dist/index.js",
   "type": "module",
