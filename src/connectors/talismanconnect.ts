@@ -39,6 +39,7 @@ export default class TalismanConnect implements Connector {
   nativeToken: string | null = null
 
   ws: WebSocket | undefined
+  wsCreated: false | Promise<void> = false
   wsHandlers: { [key: number]: (data: string | null) => void } = {}
   wsNextHandlerId: number = 1
   wsSubscriptions: { [key: string]: (output: any) => void } = {}
@@ -169,7 +170,9 @@ export default class TalismanConnect implements Connector {
 
   _wsRpcFetch(url: string, method: string, params: any[]): Promise<string> {
     return new Promise(async (resolve, reject) => {
-      if (this.ws === undefined) await this._createSocket(url)
+      if (!this.wsCreated) this.wsCreated = this._createSocket(url)
+      await this.wsCreated
+
       if (this.ws === undefined) return reject('failed to create websocket connection')
 
       const id = this._nextWsHandlerId()
@@ -192,8 +195,16 @@ export default class TalismanConnect implements Connector {
   _createSocket(url: string): Promise<void> {
     return new Promise((resolve, reject) => {
       const socket = new WebSocket(url)
+
+      let skipHealthCheck = true
+      const keepaliveInterval = 10000
+      const healthcheck = setInterval(() => {
+        !skipHealthCheck && this._wsRpcFetch(url, 'system_health', [])
+      }, keepaliveInterval)
+
       socket.onopen = () => {
         this.ws = socket
+        skipHealthCheck = false
         resolve()
       }
       socket.onmessage = message => {
@@ -235,7 +246,10 @@ export default class TalismanConnect implements Connector {
       }
       socket.onerror = reject
       socket.onclose = () => {
+        clearInterval(healthcheck)
+
         this.ws = undefined
+        this.wsCreated = false
 
         const handlers = Object.values(this.wsHandlers)
         this.wsHandlers = {}
