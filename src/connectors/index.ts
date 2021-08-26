@@ -1,7 +1,7 @@
 import _Connector, { ConnectorConstructor } from './interface'
+import Lightclient from './lightclient'
 import PolkadotJs from './polkadotjs'
 import TalismanConnect from './talismanconnect'
-import Lightclient from './lightclient'
 
 export type Connector = _Connector
 
@@ -9,9 +9,9 @@ export const ConnectorTypes = [PolkadotJs.type, TalismanConnect.type, Lightclien
 export type ConnectorType = typeof ConnectorTypes[number]
 
 const Connectors: { [key in ConnectorType]: ConnectorConstructor } = {
-  [PolkadotJs.type]: PolkadotJs,
   [TalismanConnect.type]: TalismanConnect,
   [Lightclient.type]: Lightclient,
+  [PolkadotJs.type]: PolkadotJs,
 }
 
 export default Connectors
