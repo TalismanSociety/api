@@ -203,6 +203,7 @@ export default class TalismanConnect implements Connector {
       let skipHealthCheck = true
       const keepaliveInterval = 10000
       const healthcheck = setInterval(() => {
+        // TODO: Reconnect on failure
         !skipHealthCheck && this._wsRpcFetch(url, 'system_health', [])
       }, keepaliveInterval)
 
