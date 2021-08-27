@@ -37,7 +37,7 @@ Please note: while we work towards a v1.0 release, the public interface is subje
 
 #### Import api
 
-```js
+```ts
 import Talisman from '@talismn/api'
 ```
 
@@ -45,7 +45,7 @@ import Talisman from '@talismn/api'
 
 #### Make a one-off call to balances
 
-```js
+```ts
 // Connect to the chain RPCs
 await Talisman.connect({ chains: [0, 2, 2000] })
 
@@ -71,7 +71,7 @@ await Talisman.balances(['0x000...', '0x000...'])
 
 #### Subscribe to balances
 
-```js
+```ts
 // Initialize the singleton
 Talisman.init()
 
