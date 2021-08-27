@@ -126,7 +126,7 @@ class Interface {
 
   // iterate through addresses & get chainfactory data
   // [todo] could return a balance type/object with filtering/ordering/cutting options?
-  async balance(addresses: string[] | string = []): Promise<Array<Balance>> {
+  async balances(addresses: string[] | string = []): Promise<Array<Balance>> {
     return (
       await pMap(
         typeof addresses === 'string' ? [addresses] : addresses,
