@@ -17,6 +17,7 @@ export type Balance = {
 }
 
 // create a maximum of 10 subscriptions at a time
+// TODO: Make this configurable by the library user
 const newSubscriptionsConcurrencyLimit = 10
 
 // request a maximum of 2 queries at a time
@@ -24,6 +25,7 @@ const newSubscriptionsConcurrencyLimit = 10
 // e.g. for 10 chains:
 //   2 requests * 10 chains = 20 outgoing connections
 //   5 requests * 10 chains = 50 outgoing connections
+// TODO: Make this configurable by the library user
 const requestConcurrencyLimit = 2
 
 class Interface {
