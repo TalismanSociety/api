@@ -1,5 +1,5 @@
-import Interface from './interface'
 import Factory from './factory'
+import Interface from './interface'
 
 export type { Balance } from './interface'
 

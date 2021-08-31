@@ -1,9 +1,7 @@
-import { options as acalaOptions } from '@acala-network/api'
 import { ApiPromise, WsProvider } from '@polkadot/api'
 import chaindata from '@talismn/chaindata-js'
 import { get } from 'lodash'
 
-import compose from '../compose'
 import Connector from './interface'
 
 const pathsToEndpoints = {
@@ -48,7 +46,7 @@ export default class PolkadotJs implements Connector {
 
     const { rpcs } = await this.getChainData()
     const provider = new WsProvider(rpcs)
-    await ApiPromise.create(compose(acalaOptions as any)({ provider, throwOnConnect: true })).then(api => {
+    await ApiPromise.create({ provider, throwOnConnect: true }).then(api => {
       this.api = api
     })
 
