@@ -11,10 +11,10 @@
     "prepare": "husky install",
     "pre-commit": "lint-staged",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "watch": "nodemon --watch src --ext js,ts --exec yarn prepublishOnly",
+    "watch": "nodemon --watch src --ext js,ts --exec yarn prepack",
     "build": "esbuild-node-tsc",
     "build:types": "tsc",
-    "prepublishOnly": "yarn build && yarn build:types"
+    "prepack": "yarn build && yarn build:types"
   },
   "author": "Talisman",
   "license": "GPL-3.0-only",
