@@ -86,60 +86,75 @@ export default class TalismanConnect implements Connector {
       return null
     }
 
-    const rpc = this.rpcs[0]
-    if (!rpc) throw new Error('failed to create subscription: rpc required')
+    for (const rpc of this.rpcs) {
+      try {
+        if (!rpc) throw new Error('failed to create subscription: rpc required')
 
-    if (!rpc.startsWith('wss://') && !rpc.startsWith('ws://')) {
-      throw new Error('failed to create subscription: ws or wss rpc protocol required')
+        if (!rpc.startsWith('wss://') && !rpc.startsWith('ws://')) {
+          throw new Error('failed to create subscription: ws or wss rpc protocol required')
+        }
+
+        const endpoint = get(pathsToEndpoints, path).endpoint
+        if (!endpoint) return null
+
+        const method = 'state_subscribeStorage'
+        const params = [
+          // TODO: This argument formatting is specific to System.Account, we should come up with a generic way to specify it
+          args
+            .map(args => decodeAddress(args[0]))
+            .map(addressBytes => blake2Concat(addressBytes).replace('0x', ''))
+            .map(addressHash => endpoint.replace('%s', `${addressHash}`)),
+        ]
+
+        const response = await this._wsRpcFetch(rpc, method, params)
+        const result = JSON.parse(response).result
+        const subscriptionId = result
+
+        this.wsSubscriptions[subscriptionId] = callback
+
+        const unsubscribe = async () => {
+          const method = 'state_unsubscribeStorage'
+          const params = [subscriptionId]
+
+          const response = await this._wsRpcFetch(rpc, method, params)
+          const result = JSON.parse(response).result
+
+          return result
+        }
+
+        return unsubscribe
+      } catch (error) {
+        console.error(`Failed rpc subscription via ${rpc}`, error)
+        continue
+      }
     }
 
-    const endpoint = get(pathsToEndpoints, path).endpoint
-    if (!endpoint) return null
-
-    const method = 'state_subscribeStorage'
-    const params = [
-      // TODO: This argument formatting is specific to System.Account, we should come up with a generic way to specify it
-      args
-        .map(args => decodeAddress(args[0]))
-        .map(addressBytes => blake2Concat(addressBytes).replace('0x', ''))
-        .map(addressHash => endpoint.replace('%s', `${addressHash}`)),
-    ]
-
-    const response = await this._wsRpcFetch(rpc, method, params)
-    const result = JSON.parse(response).result
-    const subscriptionId = result
-
-    this.wsSubscriptions[subscriptionId] = callback
-
-    const unsubscribe = async () => {
-      const method = 'state_unsubscribeStorage'
-      const params = [subscriptionId]
-
-      const response = await this._wsRpcFetch(rpc, method, params)
-      const result = JSON.parse(response).result
-
-      return result
-    }
-
-    return unsubscribe
+    throw new Error(`Failed rpc subscription via all rpcs for chain ${this.chainId} callpath ${path}`)
   }
 
   async call<Output>(path: string, params: string[], format: (output: any) => Output): Promise<Output | null> {
     if (!this.chainId) return null
 
-    // TODO: Iterate through all rpcs to find one which works
-    const rpc = this.rpcs[0]
-    if (!rpc) throw new Error('rpc required')
+    for (const rpc of this.rpcs) {
+      try {
+        if (!rpc) throw new Error('rpc required')
 
-    if (rpc.startsWith('wss://') || rpc.startsWith('ws://')) {
-      return this._callWs(rpc, path, params, format)
+        if (rpc.startsWith('wss://') || rpc.startsWith('ws://')) {
+          return this._callWs(rpc, path, params, format)
+        }
+
+        if (rpc.startsWith('https://') || rpc.startsWith('http://')) {
+          return this._callHttp(rpc, path, params, format)
+        }
+
+        throw new Error(`unsupported rpc protol: ${rpc}`)
+      } catch (error) {
+        console.error(`Failed rpc call via ${rpc}`, error)
+        continue
+      }
     }
 
-    if (rpc.startsWith('https://') || rpc.startsWith('http://')) {
-      return this._callHttp(rpc, path, params, format)
-    }
-
-    throw new Error(`unsupported rpc protol: ${rpc}`)
+    throw new Error(`Failed rpc call via all rpcs for chain ${this.chainId} callpath ${path}`)
   }
 
   async _callWs<Output>(
@@ -175,7 +190,13 @@ export default class TalismanConnect implements Connector {
   _wsRpcFetch(url: string, method: string, params: any[]): Promise<string> {
     return new Promise(async (resolve, reject) => {
       if (!this.wsCreated) this.wsCreated = this._createSocket(url)
-      await this.wsCreated
+
+      try {
+        await this.wsCreated
+      } catch (error) {
+        this.wsCreated = false
+        reject(error)
+      }
 
       if (this.ws === undefined) return reject('failed to create websocket connection')
 
