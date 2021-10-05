@@ -3,14 +3,17 @@
     "strict": true,
     "target": "es2015",
     "module": "es2015",
-    "emitDeclarationOnly": true,
     "declaration": true,
-    "declarationDir": "dist/types",
+    "declarationDir": "dist",
     "rootDir": "src",
     "outDir": "dist",
     "moduleResolution": "node",
     "isolatedModules": true,
     "esModuleInterop": true,
-    "noImplicitAny": false
-  }
+    "noImplicitAny": false,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "src/**/*.ts"
+  ]
 }
