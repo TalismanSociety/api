@@ -1,4 +1,4 @@
-import { decodeAddress } from '@polkadot/keyring'
+import { decodeAnyAddress } from '@talismn/util'
 import BigNumber from 'bignumber.js'
 import pMap from 'p-map'
 
@@ -57,7 +57,7 @@ class Interface {
     const subscriptions = chainIds.flatMap(chainId => ({ chainId, addresses }))
     const addressesByHex = Object.fromEntries(
       addresses.map(address => [
-        [...decodeAddress(address)].map(x => x.toString(16).padStart(2, '0')).join(''),
+        [...decodeAnyAddress(address)].map(x => x.toString(16).padStart(2, '0')).join(''),
         address,
       ])
     )
@@ -67,7 +67,7 @@ class Interface {
       async ({ chainId, addresses }) => {
         const path = 'balance'
         const format = ({ reference, output, chainId, nativeToken }: any): void => {
-          const address = addressesByHex[reference.slice(-64)]
+          const [, address] = Object.entries(addressesByHex).find(([hex]) => reference.endsWith(hex)) || []
           if (!address) {
             console.error(
               `failed to find address ${reference.slice(-64)} in map ${Object.keys(addressesByHex).join(', ')}`

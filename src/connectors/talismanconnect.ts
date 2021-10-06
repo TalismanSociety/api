@@ -1,7 +1,7 @@
-import { decodeAddress } from '@polkadot/keyring'
 import { TypeRegistry, createType } from '@polkadot/types'
 import { blake2AsHex } from '@polkadot/util-crypto'
 import chaindata from '@talismn/chaindata-js'
+import { decodeAnyAddress } from '@talismn/util'
 import { get } from 'lodash'
 
 import Connector from './interface'
@@ -34,7 +34,7 @@ const pathsToEndpoints = {
 export default class TalismanConnect implements Connector {
   static type = 'TALISMANCONNECT' as const
 
-  chainId: string | null
+  chainId: string
   rpcs: string[]
   nativeToken: string | null = null
 
@@ -44,7 +44,7 @@ export default class TalismanConnect implements Connector {
   wsNextHandlerId: number = 1
   wsSubscriptions: { [key: string]: (output: any) => void } = {}
 
-  constructor(chainId: string | null, rpcs: string[]) {
+  constructor(chainId: string, rpcs: string[]) {
     this.chainId = chainId
     this.rpcs = rpcs
 
@@ -53,13 +53,13 @@ export default class TalismanConnect implements Connector {
 
   async getChainData() {
     if (!this.rpcs?.length) {
-      const rpcResult = await chaindata.chain(this.chainId, 'rpcs')
-      this.rpcs = rpcResult.rpcs
+      const chain = await chaindata.chain(this.chainId)
+      this.rpcs = chain.rpcs
     }
 
     if (!this.nativeToken) {
-      const tokenResult = await chaindata.chain(this.chainId, 'nativeToken')
-      this.nativeToken = tokenResult.nativeToken
+      const chain = await chaindata.chain(this.chainId)
+      this.nativeToken = chain.nativeToken
     }
 
     return {
@@ -101,7 +101,7 @@ export default class TalismanConnect implements Connector {
         const params = [
           // TODO: This argument formatting is specific to System.Account, we should come up with a generic way to specify it
           args
-            .map(args => decodeAddress(args[0]))
+            .map(args => decodeAnyAddress(args[0]))
             .map(addressBytes => blake2Concat(addressBytes).replace('0x', ''))
             .map(addressHash => endpoint.replace('%s', `${addressHash}`)),
         ]
@@ -170,7 +170,7 @@ export default class TalismanConnect implements Connector {
     if (!endpoint) return null
 
     const address = args[0]
-    const addressBytes = decodeAddress(address)
+    const addressBytes = decodeAnyAddress(address)
     const addressHash = blake2Concat(addressBytes).replace('0x', '')
 
     const method = 'state_getStorage'

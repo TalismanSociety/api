@@ -17,14 +17,16 @@
   },
   "author": "Talisman",
   "license": "GPL-3.0-only",
+  "peerDependencies": {
+    "@polkadot/api": "*",
+    "@polkadot/keyring": "*",
+    "@polkadot/types": "*",
+    "@polkadot/util-crypto": "*",
+    "react": "*"
+  },
   "dependencies": {
-    "@polkadot/api": "^5.4.1",
-    "@polkadot/keyring": "^7.2.1",
-    "@polkadot/typegen": "^5.4.1",
-    "@polkadot/types": "^5.5.2",
-    "@polkadot/util": "^7.2.1",
-    "@polkadot/util-crypto": "^7.2.1",
     "@talismn/chaindata-js": "~0",
+    "@talismn/util": "~0",
     "@types/lodash": "^4.14.172",
     "@types/uuid": "^8.3.1",
     "bignumber.js": "^9.0.1",
@@ -33,6 +35,10 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "@polkadot/api": "^6.2.1",
+    "@polkadot/keyring": "^7.4.1",
+    "@polkadot/types": "^6.2.1",
+    "@polkadot/util-crypto": "^7.4.1",
     "esbuild-node-tsc": "^1.6.1",
     "husky": "^6.0.0",
     "import-sort-style-module": "^6.0.0",

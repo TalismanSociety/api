@@ -13,26 +13,26 @@ const pathsToEndpoints = {
 export default class PolkadotJs implements Connector {
   static type = 'POLKADOTJS' as const
 
-  chainId: string | null = null
-  rpcs: string[] = []
+  chainId: string
+  rpcs: string[]
   nativeToken: string | null = null
 
   api: ApiPromise | null = null
 
-  constructor(chainId: string | null, rpcs: string[] = []) {
+  constructor(chainId: string, rpcs: string[] = []) {
     this.chainId = chainId
     this.rpcs = rpcs
   }
 
   async getChainData() {
     if (!this.rpcs?.length) {
-      const rpcResult = await chaindata.chain(this.chainId, 'rpcs')
-      this.rpcs = rpcResult.rpcs
+      const chain = await chaindata.chain(this.chainId)
+      this.rpcs = chain.rpcs
     }
 
     if (!this.nativeToken) {
-      const tokenResult = await chaindata.chain(this.chainId, 'nativeToken')
-      this.nativeToken = tokenResult.nativeToken
+      const chain = await chaindata.chain(this.chainId)
+      this.nativeToken = chain.nativeToken
     }
 
     return {

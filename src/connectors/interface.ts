@@ -1,5 +1,5 @@
 export interface ConnectorConstructor {
-  new (chainId: string | null, rpcs: string[]): Connector
+  new (chainId: string, rpcs: string[]): Connector
 }
 
 export default interface Connector {

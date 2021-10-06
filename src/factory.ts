@@ -77,6 +77,8 @@ class Factory {
       await pMap(
         await this.validateChainIds(),
         async id => {
+          if (id === null) return [id]
+
           const Connector = Connectors[this.type]
           const instance = new Connector(id, id ? this.rpcs[id] : [])
 

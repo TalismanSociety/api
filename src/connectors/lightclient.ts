@@ -3,10 +3,10 @@ import Connector from './interface'
 export default class LightClient implements Connector {
   static type = 'LIGHTCLIENT' as const
 
-  chainId: string | null
+  chainId: string
   rpcs: string[]
 
-  constructor(chainId: string | null, rpcs: string[]) {
+  constructor(chainId: string, rpcs: string[]) {
     this.chainId = chainId
     this.rpcs = rpcs
 
