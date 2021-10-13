@@ -44,6 +44,19 @@ export default class TalismanConnect implements Connector {
   wsNextHandlerId: number = 1
   wsSubscriptions: { [key: string]: (output: any) => void } = {}
 
+  // Sometimes when we subscribe to some data, we receive the data before we receive the subscription id.
+  // For example:
+  //
+  // Outgoing -> {"id":1,"jsonrpc":"2.0","method":"state_subscribeStorage","params":[["<data>"]]}
+  // Incoming <- {"jsonrpc":"2.0","method":"state_storage","params":{"result":{"block":"<hash>","changes":[["<data>","<data>"]]},"subscription":"Xdi30rwJSV2vTDly"}}
+  // Incoming <- {"jsonrpc":"2.0","result":"Xdi30rwJSV2vTDly","id":1}
+  //
+  // Because we haven't yet registered a callback for the subscription result, the first set of data is lost.
+  // To fix this, we cache the most recently received data for each subscription id which doesn't yet have a handler.
+  // When registering a new handler, we check if it has any data waiting in this cache and immediately send it through if so.
+  //
+  wsLatestUnhandledSubscriptionData: { [key: string]: any } = {}
+
   constructor(chainId: string, rpcs: string[]) {
     this.chainId = chainId
     this.rpcs = rpcs
@@ -111,6 +124,11 @@ export default class TalismanConnect implements Connector {
         const subscriptionId = result
 
         this.wsSubscriptions[subscriptionId] = callback
+
+        if (this.wsLatestUnhandledSubscriptionData[subscriptionId]) {
+          this.wsLatestUnhandledSubscriptionData[subscriptionId].forEach(callback)
+          delete this.wsLatestUnhandledSubscriptionData[subscriptionId]
+        }
 
         const unsubscribe = async () => {
           const method = 'state_unsubscribeStorage'
@@ -239,21 +257,24 @@ export default class TalismanConnect implements Connector {
 
         if (isSubscriptionUpdate) {
           const subscriptionId = data.params.subscription
+          const formatChange = ([reference, change]) => ({
+            chainId: this.chainId,
+            nativeToken: this.nativeToken,
+            reference,
+            // TODO: This output formatting is specific to System.Account, we should come up with a generic way to specify it
+            output: createType(registry, AccountInfo, change),
+          })
+
           const handler = this.wsSubscriptions[subscriptionId]
           if (!handler) {
-            console.warn(`ignoring subscription ${subscriptionId}: no handler registered for this subscription id`)
+            console.warn(
+              `caching result for subscription ${subscriptionId}: no handler registered for this subscription id`
+            )
+            this.wsLatestUnhandledSubscriptionData[subscriptionId] = data.params.result.changes.map(formatChange)
             return
           }
 
-          data.params.result.changes.forEach(([reference, change]) =>
-            handler({
-              chainId: this.chainId,
-              nativeToken: this.nativeToken,
-              reference,
-              // TODO: This output formatting is specific to System.Account, we should come up with a generic way to specify it
-              output: createType(registry, AccountInfo, change),
-            })
-          )
+          data.params.result.changes.map(formatChange).forEach(handler)
 
           return
         }
