@@ -40,6 +40,7 @@ export default class WsProviderConnector implements Connector {
   nativeToken: string | null = null
 
   ws: WsProvider | undefined
+  killHealthCheck: boolean = false
 
   constructor(chainId: string, rpcs: string[]) {
     this.chainId = chainId
@@ -72,6 +73,19 @@ export default class WsProviderConnector implements Connector {
 
     const autoConnectMs = 1000
     this.ws = new WsProvider(this.rpcs, autoConnectMs)
+
+    // set up healthcheck (keeps ws open when idle), don't wait for setup to complete
+    ;(async () => {
+      if (!this.ws) return console.warn('ignoring ws healthcheck init: this.ws is not defined')
+      await this.ws.isReady
+
+      const intervalMs = 10_000 // 10,000ms = 10s
+      const intervalId = setInterval(() => {
+        if (this.killHealthCheck) return clearInterval(intervalId)
+        if (!this.ws) return console.warn('skipping ws healthcheck: this.ws is not defined')
+        this.ws.send('system_health', [])
+      }, intervalMs)
+    })()
 
     return
   }
