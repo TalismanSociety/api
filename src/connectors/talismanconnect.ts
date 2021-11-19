@@ -165,7 +165,8 @@ export default class TalismanConnect implements Connector {
           return this._callHttp(rpc, path, params, format)
         }
 
-        throw new Error(`unsupported rpc protol: ${rpc}`)
+        console.warn('TalismanConnect.call not implemented. Try TalismanConnect.subscribe instead!')
+        return null
       } catch (error) {
         console.error(`Failed rpc call via ${rpc}`, error)
         continue
