@@ -21,9 +21,20 @@ const AccountInfo = JSON.stringify({
     feeFrozen: 'u128',
   },
 })
+const KiltAccountInfo = JSON.stringify({
+  nonce: 'u64',
+  consumer: 'u32',
+  providers: 'u32',
+  sufficients: 'u32',
+  data: {
+    free: 'u128',
+    reserved: 'u128',
+    miscFrozen: 'u128',
+    feeFrozen: 'u128',
+  },
+})
 
 const registry = new TypeRegistry()
-registry.register({ AccountInfo })
 
 const pathsToEndpoints = {
   balance: {
@@ -121,12 +132,13 @@ export default class WsProviderConnector implements Connector {
     ]
 
     // set up function for formatting the result
+    const formatType = this.chainId === '2-2086' ? KiltAccountInfo : AccountInfo
     const formatChange = ([reference, change]) => ({
       chainId: this.chainId,
       nativeToken: this.nativeToken,
       reference,
       // TODO: This output formatting is specific to System.Account, we should come up with a generic way to specify it
-      output: createType(registry, AccountInfo, change),
+      output: createType(registry, formatType, change),
     })
 
     // wait for WsProvider to be connected
