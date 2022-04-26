@@ -1,7 +1,7 @@
-import Factory from './factory'
-import Interface from './interface'
+import Factory from '../dist/factory'
+import Interface from '../dist/interface'
 
-export type { Balance } from './interface'
+export type { Balance } from '../dist/interface'
 
 const InterfaceInstance = new Interface()
 const FactoryInstance = new Factory()
