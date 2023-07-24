@@ -1,3 +1,11 @@
+>
+> This repo is no longer maintained.
+>
+> Talisman's token balance support is now part of the `@talismn/balances` collection of packages.
+>
+> The source code for these packages can be found in the `packages` directory of the [Talisman monorepo](https://github.com/talismansociety/talisman).
+>
+
 # @talismn/api
 
 <img src="1f9ff.svg" alt="Talisman" width="15%" align="right" />
